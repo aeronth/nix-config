@@ -1,61 +1,104 @@
 # Edit this configuration file to define what should be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running ‘nixos-help’).
+# your system. Help is available in the configuration.nix(5) man page, on
+# https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ pkgs, inputs, ... }:
+{ config, lib, pkgs, ... }:
 
-let
-  customFonts = pkgs.nerdfonts.override {
-    fonts = [
-      "JetBrainsMono"
-      "Iosevka"
-    ];
-  };
-
-  myfonts = pkgs.callPackage fonts/default.nix { inherit pkgs; };
-in
 {
   imports =
-    [
-      # Window manager
+    [ # Include the results of the hardware scan.
+      ./hardware-configuration.nix
+      # Include the necessary packages and configuration for Apple Silicon support.
+      ./apple-silicon-support
+      # Include the X11 components
       ./wm/xmonad.nix
     ];
 
-  networking = {
-    extraHosts = pkgs.sxm.hosts.extra or "";
+  nixpkgs.config.allowUnfree = true;
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  powerManagement.enable = true;
+  systemd.targets.sleep.enable = true;
+  systemd.targets.suspend.enable = true;
+  systemd.targets.hibernate.enable = true;
+  systemd.targets.hybrid-sleep.enable = true;
 
-    # Enables wireless support and openvpn via network manager.
-    networkmanager = {
-      enable = true;
-      plugins = with pkgs; [
-        networkmanager-openvpn
-        networkmanager-openconnect
-      ];
-    };
+  # Use the systemd-boot EFI boot loader.
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = false;
 
-    # The global useDHCP flag is deprecated, therefore explicitly set to false here.
-    # Per-interface useDHCP will be mandatory in the future, so this generated config
-    # replicates the default behaviour.
-    useDHCP = false;
-  };
+  networking.hostName = "kryndig"; # Define your hostname.
+  # Pick only one of the below networking options.
+  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+  networking.networkmanager.enable = true;  # Easiest to use and most distros use this by default.
+#  networking.wireless.iwd = {
+#    enable = true;
+#    settings.General.EnableNetworkConfiguration = true;
+#  };
+
+  # Set your time zone.
+  time.timeZone = "America/Los_Angeles";
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
   # Select internationalisation properties.
-  i18n.defaultLocale = "en_US.UTF-8";
+  # i18n.defaultLocale = "en_US.UTF-8";
+  # console = {
+  #   font = "Lat2-Terminus16";
+  #   keyMap = "us";
+  #   useXkbConfig = true; # use xkb.options in tty.
+  # };
+  
+  # KeyBase
+  services.keybase.enable = true;
+  services.kbfs.enable = true;
 
-  # Set your time zone.
-  time.timeZone = "Europe/Warsaw";
+  # Enable the X11 windowing system.
+#  services.xserver.enable = true;
+#  services.xserver.displayManager.gdm.enable = true;
+#  #services.xserver.desktopManager.gnome.enable = true;
+#  services.xserver.windowManager.xmonad = {
+#    enable = true;
+#    enableContribAndExtras = true;
+#  };
+  
+  # Configure keymap in X11
+  # services.xserver.xkb.layout = "us";
+  # services.xserver.xkb.options = "eurosign:e,caps:escape";  
+
+  # Enable CUPS to print documents.
+  services.printing.enable = true;
+  services.printing.drivers = [ pkgs.brlaser ];
+
+  # Enable sound.
+  sound.enable = true;
+  # hardware.pulseaudio.enable = true;
+
+  # Enable touchpad support (enabled default in most desktopManager).
+  services.xserver.libinput.enable = true;
+
+  # Define a user account. Don't forget to set a password with ‘passwd’.
+  users.users.aeronth = {
+    isNormalUser = true;
+    extraGroups = [ "wheel" "sudo" "docker" ]; # Enable ‘sudo’ for the user.
+    packages = with pkgs; [
+      tree
+    ];
+  };
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    globalprotect-openconnect
-    firejail
-    vim
-    wget
+    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    wget git btop lshw tree firefox
+    kitty dmenu screen xscreensaver xmobar
+    brightnessctl
+  ];
+
+  fonts.fontDir.enable = true;
+  fonts.packages = with pkgs; [
+    ocr-a
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -64,9 +107,16 @@ in
   programs.gnupg.agent = {
     enable = true;
     enableSSHSupport = true;
+    pinentryFlavor = "curses";
   };
 
   # List services that you want to enable:
+  
+  # Virtualisation
+  virtualisation.docker.enable = true;
+
+  # Enable the OpenSSH daemon.
+  services.openssh.enable = true;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
@@ -74,167 +124,28 @@ in
   # Or disable the firewall altogether.
   networking.firewall.enable = false;
 
-  # Enable Docker support
-  virtualisation = {
-    docker = {
-      enable = true;
-      autoPrune = {
-        enable = true;
-        dates = "weekly";
-      };
-      daemon.settings = {
-        bip = "169.254.0.1/16";
-      };
-    };
-  };
+  # Copy the NixOS configuration file and link it from the resulting system
+  # (/run/current-system/configuration.nix). This is useful in case you
+  # accidentally delete configuration.nix.
+  system.copySystemConfiguration = true;
 
-  users.extraGroups.vboxusers.members = [ "gvolpe" ];
-
-  security.rtkit.enable = true;
-
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-  };
-
-  # Scanner backend
-  hardware.sane = {
-    enable = true;
-    extraBackends = [ pkgs.epkowa pkgs.sane-airscan ];
-  };
-
-  services = {
-    # Network scanners
-    avahi = {
-      enable = true;
-      nssmdns = true;
-    };
-
-    # Mount MTP devices
-    gvfs.enable = true;
-
-    # Enable the OpenSSH daemon.
-    openssh = {
-      enable = true;
-      allowSFTP = true;
-    };
-
-    # Yubikey smart card mode (CCID)
-    pcscd.enable = true;
-
-    udev.packages = with pkgs; [
-      bazecor # Dygma Defy keyboard udev rules for non-root modifications
-      yubikey-personalization # Yubikey OTP mode (udev)
-    ];
-
-    # SSH daemon.
-    sshd.enable = true;
-
-    # Enable CUPS to print documents.
-    printing = {
-      enable = true;
-      drivers = [ pkgs.epson-escpr ];
-    };
-
-    globalprotect.enable = true;
-
-    # Remote desktop protocol
-    xrdp = {
-      enable = false;
-      defaultWindowManager = "xmonad";
-      openFirewall = false;
-      #package = pkgs.xrdp.overrideAttrs (old: {
-      #postInstall = old.postInstall + ''
-      #echo ">>>>>>>>> INI file"
-      #cat $out/etc/xrdp/xrdp.ini
-      #echo "<<<<<<<<< INI file"
-      #'';
-      #});
-    };
-  };
-
-  # Making fonts accessible to applications.
-  fonts.packages = with pkgs; [
-    customFonts
-    font-awesome
-    myfonts.flags-world-color
-    myfonts.icomoon-feather
-  ];
-
-  programs.fish.enable = true;
-
-  # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.gvolpe = {
-    isNormalUser = true;
-    # wheel for 'sudo', uucp for bazecor to access ttyAMC0 (keyboard firmware updates)
-    extraGroups = [ "docker" "networkmanager" "wheel" "scanner" "lp" "uucp" ];
-    shell = pkgs.fish;
-  };
-
-  security = {
-    # Yubikey login & sudo
-    pam.yubico = {
-      enable = true;
-      debug = false;
-      mode = "challenge-response";
-    };
-
-    # Sudo custom prompt message
-    sudo.configFile = ''
-      Defaults lecture=always
-      Defaults lecture_file=${misc/groot.txt}
-    '';
-  };
-
-  # Nix daemon config
-  nix = {
-    # Automate garbage collection
-    gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 7d";
-    };
-
-    # Flakes settings
-    package = pkgs.nixVersions.stable;
-    registry.nixpkgs.flake = inputs.nixpkgs;
-
-    settings = {
-      # Automate `nix store --optimise`
-      auto-optimise-store = true;
-
-      # Required by Cachix to be used as non-root user
-      trusted-users = [ "root" "gvolpe" ];
-
-      experimental-features = [ "nix-command" "flakes" ];
-      warn-dirty = false;
-
-      # Binary caches
-      substituters = [
-        "https://cache.nixos.org"
-        "https://cache.garnix.io"
-        "https://gvolpe-nixos.cachix.org"
-      ];
-      trusted-public-keys = [
-        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-        "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
-        "gvolpe-nixos.cachix.org-1:0MPlBIMwYmrNqoEaYTox15Ds2t1+3R+6Ycj0hZWMcL0="
-      ];
-
-      # Avoid unwanted garbage collection when using nix-direnv
-      keep-outputs = true;
-      keep-derivations = true;
-    };
-  };
-
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "21.03"; # Did you read the comment?
+  # This option defines the first version of NixOS you have installed on this particular machine,
+  # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
+  #
+  # Most users should NEVER change this value after the initial install, for any reason,
+  # even if you've upgraded your system to a new NixOS release.
+  #
+  # This value does NOT affect the Nixpkgs version your packages and OS are pulled from,
+  # so changing it will NOT upgrade your system.
+  #
+  # This value being lower than the current NixOS release does NOT mean your system is
+  # out of date, out of support, or vulnerable.
+  #
+  # Do NOT change this value unless you have manually inspected all the changes it would make to your configuration,
+  # and migrated your data accordingly.
+  #
+  # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
+  system.stateVersion = "24.05"; # Did you read the comment?
 
 }
+

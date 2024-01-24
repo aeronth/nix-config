@@ -4,7 +4,6 @@ with inputs;
 
 let
   imports = [
-    neovim-flake.nixosModules.${system}.hm
     ../home/home.nix
   ];
 
@@ -17,6 +16,6 @@ let
   );
 in
 {
-  gvolpe-edp = mkHome { hidpi = false; };
-  gvolpe-hdmi = mkHome { hidpi = true; };
+  edp = mkHome { hidpi = false; };
+  hdmi = mkHome { hidpi = true; };
 }

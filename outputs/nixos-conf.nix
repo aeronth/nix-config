@@ -6,8 +6,7 @@ let
   inherit (nixpkgs.lib) nixosSystem;
   inherit (pkgs) lib;
 
-  tongfangModules = [
-    ../system/machine/tongfang-amd
+  appleModules = [
     ../system/configuration.nix
   ];
 
@@ -20,28 +19,13 @@ let
   ];
 
   vmUser = {
-    users.users.gvolpe.initialPassword = "test";
+    users.users.aeronth.initialPassword = "test";
   };
 in
 {
-  dell-xps = nixosSystem {
+  edp-apple = nixosSystem {
     inherit lib pkgs system;
     specialArgs = { inherit inputs; };
-    modules = [
-      ../system/machine/dell-xps
-      ../system/configuration.nix
-    ];
-  };
-
-  tongfang-amd = nixosSystem {
-    inherit lib pkgs system;
-    specialArgs = { inherit inputs; };
-    modules = tongfangModules;
-  };
-
-  edp-tongfang-amd = nixosSystem {
-    inherit lib pkgs system;
-    specialArgs = { inherit inputs; };
-    modules = tongfangModules ++ edpHomeModules ++ [ vmUser ];
+    modules = appleModules ++ edpHomeModules ++ [ vmUser ];
   };
 }

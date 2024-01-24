@@ -6,7 +6,7 @@
     backend = "glx";
     fade = true;
     fadeDelta = 5;
-    opacityRules = [ "100:name *= 'i3lock'" ];
+    opacityRules = [ "100:name *= 'xscreensaver'" ];
     shadow = true;
     shadowOpacity = 0.75;
   };

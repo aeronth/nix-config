@@ -1,63 +1,35 @@
 { pkgs, lib, ... }:
 
 let
-  username = "gvolpe";
+  username = "aeronth";
   homeDirectory = "/home/${username}";
   configHome = "${homeDirectory}/.config";
 
   defaultPkgs = with pkgs; [
-    any-nix-shell        # fish support for nix shell
     arandr               # simple GUI for xrandr
     asciinema            # record the terminal
-    audacious            # simple music player
-    bazecor              # configuration software for the dygma defy keyboard
-    bitwarden-cli        # command-line client for the password manager
-    bottom               # alternative to htop & ytop
-    calibre              # e-book reader
-    cobang               # qr-code scanner
-    cowsay               # cowsay fortune teller with random images
     dconf2nix            # dconf (gnome) files to nix converter
     dig                  # dns command-line tool
     docker-compose       # docker manager
     dive                 # explore docker layers
-    drawio               # diagram design
     duf                  # disk usage/free utility
     eza                  # a better `ls`
     fd                   # "find" for files
-    gimp                 # gnu image manipulation program
-    glow                 # terminal markdown viewer
-    #gnomecast            # chromecast local files
-    hyperfine            # command-line benchmarking tool
-    insomnia             # rest client with graphql support
     jitsi-meet-electron  # open source video calls and chat
-    jmtpfs               # mount mtp devices
     killall              # kill processes by name
-    libreoffice          # office suite
     libnotify            # notify-send command
     lnav                 # log file navigator on the terminal
-    multilockscreen      # fast lockscreen based on i3lock
     ncdu                 # disk space info (a better du)
-    nitch                # minimal system information fetch
     nix-index            # locate packages containing certain nixpkgs
     nix-output-monitor   # nom: monitor nix commands
     nyancat              # the famous rainbow cat!
-    ouch                 # painless compression and decompression for your terminal
     pavucontrol          # pulseaudio volume control
     paprefs              # pulseaudio preferences
     pasystray            # pulseaudio systray
-    pgcli                # modern postgres client
-    playerctl            # music player controller
     prettyping           # a nicer ping
-    protonvpn-gui        # official proton vpn client
     pulsemixer           # pulseaudio mixer
-    rage                 # encryption tool for secrets management
-    ranger               # terminal file explorer
-    ripgrep              # fast grep
     screenkey            # shows keypresses on screen
-    simple-scan          # scanner gui
     simplescreenrecorder # screen recorder gui
-    skypeforlinux        # messaging client
-    slack                # messaging client
     tdesktop             # telegram messaging client
     tldr                 # summary of a man page
     tree                 # display files in a tree view
@@ -76,16 +48,13 @@ let
     #nautilus # file manager
 
     # file manager overlay
-    pkgs.nautilus-gtk3
-    #pkgs.nautilus-bin
-    #pkgs.nautilus-patched
+    pkgs.nautilus
   ];
 in
 {
   programs.home-manager.enable = true;
 
   imports = lib.concatMap import [
-    ./modules
     ./programs
     ./scripts
     ./services
@@ -106,7 +75,7 @@ in
     sessionVariables = {
       BROWSER = "${lib.getExe pkgs.firefox-beta-bin}";
       DISPLAY = ":0";
-      EDITOR = "nvim";
+      EDITOR = "vim";
     };
   };
 
@@ -114,5 +83,5 @@ in
   systemd.user.startServices = "sd-switch";
 
   # notifications about home-manager news
-  news.display = "silent";
+  # news.display = "silent";
 }

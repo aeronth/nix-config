@@ -15,12 +15,6 @@
     xserver = {
       enable = true;
 
-      extraLayouts.us-custom = {
-        description = "US layout with custom hyper keys";
-        languages   = [ "eng" ];
-        symbolsFile = ./us-custom.xkb;
-      };
-
       layout = "us";
 
       libinput = {
@@ -34,13 +28,14 @@
         Option "OffTime"     "0"
       '';
 
-      displayManager = {
-        defaultSession = "none+xmonad";
-      };
-
+      displayManager.gdm.enable = true;
       windowManager.xmonad = {
         enable = true;
         enableContribAndExtras = true;
+        extraPackages = hp: [
+          hp.dbus
+          hp.monad-logger
+        ];
       };
 
       # does not work, setting it manually on start up

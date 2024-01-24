@@ -105,7 +105,7 @@ main = mkDbusClient >>= main'
 main' :: D.Client -> IO ()
 main' dbus = xmonad . docks . ewmh . ewmhFullscreen . dynProjects . keybindings . urgencyHook $ def
   { terminal           = myTerminal
-  , focusFollowsMouse  = False
+  , focusFollowsMouse  = True
   , clickJustFocuses   = False
   , borderWidth        = 3
   , modMask            = myModMask
@@ -183,7 +183,7 @@ myPolybarLogHook dbus = myLogHook <+> dynamicLogWithPP (polybarHook dbus)
 -- Key bindings. Add, modify or remove key bindings here.
 --
 
-myTerminal   = "alacritty"
+myTerminal   = "kitty"
 appLauncher  = "rofi -modi drun,ssh,window -show drun -show-icons"
 calcLauncher = "rofi -show calc -modi calc -no-show-match -no-sort"
 emojiPicker  = "rofi -modi emoji -show emoji -emoji-mode copy"
@@ -193,8 +193,8 @@ playerctl c  = "playerctl --player=spotify,%any " <> c
 showKeybindings :: [((KeyMask, KeySym), NamedAction)] -> NamedAction
 showKeybindings xs =
   let
-    filename = "/home/gvolpe/.xmonad/keybindings"
-    command f = "alacritty -e dialog --title 'XMonad Key Bindings' --colors --hline \"$(date)\" --textbox " ++ f ++ " 50 100"
+    filename = "/home/aeronth/.xmonad/keybindings"
+    command f = "kitty -e dialog --title 'XMonad Key Bindings' --colors --hline \"$(date)\" --textbox " ++ f ++ " 50 100"
   in addName "Show Keybindings" $ do
     b <- liftIO $ doesFileExist filename
     unless b $ liftIO (writeFile filename (unlines $ showKm xs))
@@ -205,10 +205,16 @@ myKeys conf@XConfig {XMonad.modMask = modm} =
   keySet "Applications"
     [ key "Slack"         (modm                , xK_F2      ) $ spawnOn comWs "slack"
     ] ^++^
+  keySet "Lights"
+    [ key "Brightness Up"       (0, xF86XK_MonBrightnessUp      ) $ spawn "brightnessctl --device='apple-panel-bl' set 4%+"
+    , key "Brightness Down"     (0, xF86XK_MonBrightnessDown    ) $ spawn "brightnessctl --device='apple-panel-bl' set 4%-"
+    , key "Key Brightness Up"   (modm, xF86XK_MonBrightnessUp   ) $ spawn "brightnessctl --device='kbd_backlight' set 4%+"
+    , key "Key Brightness Down" (modm, xF86XK_MonBrightnessDown ) $ spawn "brightnessctl --device='kbd_backlight' set 4%-"
+    ] ^++^
   keySet "Audio"
     [ key "Mute"          (0, xF86XK_AudioMute              ) $ spawn "amixer -q set Master toggle"
-    , key "Lower volume"  (0, xF86XK_AudioLowerVolume       ) $ spawn "amixer -q set Master 5%-"
-    , key "Raise volume"  (0, xF86XK_AudioRaiseVolume       ) $ spawn "amixer -q set Master 5%+"
+    , key "Lower volume"  (0, xF86XK_AudioLowerVolume       ) $ spawn "amixer -q set Master 2%-"
+    , key "Raise volume"  (0, xF86XK_AudioRaiseVolume       ) $ spawn "amixer -q set Master 2%+"
     , key "Play / Pause"  (0, xF86XK_AudioPlay              ) $ spawn $ playerctl "play-pause"
     , key "Stop"          (0, xF86XK_AudioStop              ) $ spawn $ playerctl "stop"
     , key "Previous"      (0, xF86XK_AudioPrev              ) $ spawn $ playerctl "previous"
@@ -246,7 +252,7 @@ myKeys conf@XConfig {XMonad.modMask = modm} =
     [ key "Toggle status bar gap"  (modm              , xK_b ) toggleStruts
     , key "Logout (quit XMonad)"   (modm .|. shiftMask, xK_q ) $ io exitSuccess
     , key "Restart XMonad"         (modm              , xK_q ) $ spawn "xmonad --recompile; xmonad --restart"
-    , key "Capture entire screen"  (modm          , xK_Print ) $ spawn "flameshot full -p ~/Pictures/flameshot/"
+    , key "Capture screen region"  (modm             , xK_F4 ) $ spawn "flameshot gui" -- -p ~/Pictures/flameshot/"
     , key "Switch keyboard layout" (modm             , xK_F8 ) $ spawn "kls"
     , key "Disable CapsLock"       (modm             , xK_F9 ) $ spawn "setxkbmap -option ctrl:nocaps"
     ] ^++^
@@ -345,19 +351,19 @@ myLayout =
     . wrkLayout $ (tiled ||| Mirror tiled ||| column3 ||| full)
    where
      -- default tiling algorithm partitions the screen into two panes
-     tiled   = gapSpaced 10 $ Tall nmaster delta ratio
+     tiled   = gapSpaced 7 $ Tall nmaster delta ratio
      full    = gapSpaced 5 Full
-     column3 = gapSpaced 10 $ ThreeColMid 1 (3/100) (1/2)
-     grid'   = gapSpaced 10 $ Grid
+     column3 = gapSpaced 7 $ ThreeColMid 1 (3/100) (1/2)
+     grid'   = gapSpaced 7 $ Grid
 
      -- The default number of windows in the master pane
      nmaster = 1
 
      -- Default proportion of screen occupied by master pane
-     ratio   = 1/2
+     ratio   = 56/100
 
      -- Percent of screen to increment by when resizing panes
-     delta   = 3/100
+     delta   = 2/100
 
      -- Gaps bewteen windows
      myGaps gap  = gaps [(U, gap),(D, gap),(L, gap),(R, gap)]

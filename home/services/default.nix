@@ -17,6 +17,5 @@ in
   ./picom
   ./polybar
   ./screenlocker
-  ./udiskie
   more
 ]
