@@ -92,8 +92,5 @@
       nixosConfigurations =
         import ./outputs/nixos-conf.nix { inherit inputs system pkgs extraArgs; };
 
-      packages.${system} = {
-        inherit (pkgs) bazecor metals metals-updater;
-      };
     };
 }
